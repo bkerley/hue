@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 module Hue
   class Light
     HUE_RANGE = 0..65535
@@ -151,6 +152,53 @@ module Hue
     def refresh
       json = MultiJson.load(Net::HTTP.get(URI.parse(base_url)))
       unpack(json)
+    end
+
+    # Convert the HSV of the lamp to an HTML-style RGB hex string like "#FF00FF"
+    # @return [String] an HTML-style color string 
+    def to_rgb_hex
+      '#' + to_rgb.map { |v| v.to_s(16) }.join
+    end
+
+    # Convert the HSV of the lamp to an RGB array suitable for further conversion.
+    # Each RGB channel is represented by an integer 0-255
+    # @return [Array<Integer, Integer, Integer>] the red, green, and blue 
+    #   components of the color, respectively.
+    def to_rgb
+      h = (hue.to_f / HUE_RANGE.size) * 360
+      s = saturation.to_f / SATURATION_RANGE.size
+      v = brightness.to_f / BRIGHTNESS_RANGE.size
+
+      # grey
+      if s == 0
+        grey = (v * 255).round
+        return [grey, grey, grey]
+      end
+
+      h_prime = h / 60.0
+      sector = h_prime.floor
+      factorial = h_prime - sector
+
+      p = v * (1 - s)
+      q = v * (1 - (s * factorial))
+      t = v * (1 - (s * (1 - factorial)))
+
+      chunk = case sector
+              when 0
+                [v, t, p]
+              when 1
+                [q, v, p]
+              when 2
+                [p, v, t]
+              when 3
+                [p, q, v]
+              when 4
+                [t, p, v]
+              when 5
+                [v, p, q]
+              end
+
+      return chunk.map{ |c| (c * 255).round }
     end
 
   private
