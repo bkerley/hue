@@ -157,7 +157,7 @@ module Hue
     # Convert the HSV of the lamp to an HTML-style RGB hex string like "#FF00FF"
     # @return [String] an HTML-style color string 
     def to_rgb_hex
-      '#' + to_rgb.map { |v| v.to_s(16) }.join
+      '#%02x%02x%02x' % to_rgb
     end
 
     # Convert the HSV of the lamp to an RGB array suitable for further conversion.
