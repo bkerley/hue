@@ -5,7 +5,9 @@ module Hue
   class Client
     attr_reader :username
 
-    def initialize(username = '1234567890')
+    def initialize(options = {})
+      @options = { username: '1234567890' }.merge options
+      username = @options[:username]
       unless USERNAME_RANGE.include?(username.length)
         raise InvalidUsername, "Usernames must be between #{USERNAME_RANGE.first} and #{USERNAME_RANGE.last}."
       end
@@ -22,6 +24,11 @@ module Hue
     end
 
     def bridges
+      if @options[:bridge]
+        @bridges = [Bridge.new(self, 'internalipaddress' => @options[:bridge])]
+        return @bridges
+      end
+
       @bridges ||= begin
         bs = []
         MultiJson.load(Net::HTTP.get(URI.parse('http://www.meethue.com/api/nupnp'))).each do |hash|
